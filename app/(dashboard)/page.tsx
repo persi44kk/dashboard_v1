@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useTheme } from "../layout"
+import { useTheme } from "./layout"
 
 export default function PlayerInfoPage() {
   const { darkMode } = useTheme()
