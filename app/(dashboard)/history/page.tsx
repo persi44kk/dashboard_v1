@@ -1,6 +1,6 @@
 "use client"
 
-import { useTheme } from "./layout"
+import { useTheme } from "../layout"
 
 export default function AccountHistoryPage() {
   const { darkMode } = useTheme()
