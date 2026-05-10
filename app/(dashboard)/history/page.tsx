@@ -1,305 +1,282 @@
 "use client"
 
-import { useTheme } from "../layout"
+import { useState } from "react"
+import { usePlayerStore } from "../layout"
+import { 
+  ArrowDownRight, ArrowUpRight, Gamepad2, Trophy, 
+  ChevronDown, ChevronUp, Ticket, CreditCard, Banknote
+} from "lucide-react"
 
-export default function AccountHistoryPage() {
-  const { darkMode } = useTheme()
+// --- МОКОВЫЕ ДАННЫЕ ---
+const summaryData = {
+  hold: { value: -4804.02, percent: "-35.24%" },
+  balance: 1300.04,
+  frozen: 1300.00,
+  available: 0.04,
+  stakes: { count: 0, value: 0.00 },
+  wins: { count: 0, value: 0.00 },
+  sportProfit: 0.00,
+  gameProfit: -4804.02,
+  withdrawals: { count: 9, value: 17137.00 },
+  deposits: { count: 57, value: 13633.00 },
+  correctionTo: { count: 0, value: 0.00 },
+  correctionFrom: { count: 0, value: 0.00 },
+  totalBonus: 0.00,
+  bonusDeposit: 0.00,
+  leaderboard: 0.00,
+  bonusEncash: 0.00,
+  paymentFees: 515.52
+}
+
+const transactions =[
+  {
+    id: "tx_1", type: "withdrawal", date: "10 May 2026, 14:30",
+    method: "Pix", amount: -1500.00, balanceBefore: 2800.04, balanceAfter: 1300.04, status: "Completed"
+  },
+  {
+    id: "tx_2", type: "deposit", date: "09 May 2026, 09:15",
+    method: "Crypto (USDT)", amount: 3000.00, bonusCode: "WELCOME100", balanceBefore: 1200.04, balanceAfter: 4200.04, status: "Completed"
+  },
+  {
+    id: "tx_3", type: "sport", date: "08 May 2026, 20:45",
+    betId: "SB-99214", event: "Real Madrid vs Bayern Munich", market: "1X2 (Real Madrid)", odds: 1.85, 
+    amount: -1000.00, profit: 850.00, outcome: "win", balanceAfter: 1200.04
+  },
+  {
+    id: "tx_4", type: "casino_group", date: "08 May 2026, 18:00 - 19:30",
+    game: "Sweet Bonanza (Pragmatic)", totalBets: 45, totalAmount: -450.00, totalProfit: -450.00, outcome: "lose",
+    sessionDetails:[
+      { id: "sp_1", time: "19:28", amount: -10.00, profit: 0, outcome: "lose" },
+      { id: "sp_2", time: "19:25", amount: -10.00, profit: 15.50, outcome: "win" },
+      { id: "sp_3", time: "19:21", amount: -10.00, profit: 0, outcome: "lose" },
+      // ... еще 42 спина скрыты для примера
+    ]
+  },
+  {
+    id: "tx_5", type: "sport", date: "07 May 2026, 15:10",
+    betId: "SB-98822", event: "Lakers vs Celtics", market: "Total Over 210.5", odds: 1.90, 
+    amount: -500.00, profit: -500.00, outcome: "lose", balanceAfter: 200.04
+  }
+]
+
+export default function HistoryPage() {
+  const { darkMode } = usePlayerStore()
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups(prev => prev.includes(id) ? prev.filter(g => g !== id) :[...prev, id])
+  }
+
+  // Хелпер для форматирования валюты
+  const formatCur = (val: number) => `${val < 0 ? '-' : ''}${Math.abs(val).toLocaleString('en-US', {minimumFractionDigits: 2})} BRL`
+  const colorCur = (val: number) => val > 0 ? "text-emerald-500" : val < 0 ? "text-red-500" : (darkMode ? "text-gray-400" : "text-gray-500")
 
   return (
-    <div className="space-y-6">
-      {/* Activity Timeline */}
-      <div className={`rounded-2xl p-6 transition-colors duration-300 ${darkMode ? 'glass' : 'bg-white border border-gray-200 shadow-sm'}`}>
-        <h3 className={`text-sm font-medium mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Recent Activity Flow</h3>
-        <div className="flex items-start justify-between">
-          {/* Login */}
-          <div className="flex flex-col items-center relative">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-2 shadow-lg shadow-blue-500/20">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Login</span>
-            <span className="text-xs text-gray-500">14:32</span>
+    <div className="space-y-3">
+      
+      {/* ===== БЛОК SUMMARY ===== */}
+      <div className={`rounded-xl p-3 border shadow-sm ${darkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white border-gray-200'}`}>
+        <h3 className={`text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <Banknote className="w-3.5 h-3.5" /> Financial Summary
+        </h3>
+        
+        {/* Плотный Grid для данных */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+          
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Hold</span>
+            <span className={`text-xs font-bold ${colorCur(summaryData.hold.value)}`}>{formatCur(summaryData.hold.value)}</span>
+            <span className="text-[9px] text-gray-500">{summaryData.hold.percent}</span>
           </div>
 
-          {/* Connector */}
-          <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-500 via-emerald-500 to-emerald-500 mt-6 mx-2 rounded-full opacity-50" />
-
-          {/* Deposit */}
-          <div className="flex flex-col items-center relative">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mb-2 shadow-lg shadow-emerald-500/20">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Deposit</span>
-            <span className="text-xs text-gray-500">14:35</span>
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Balance / Frozen</span>
+            <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{formatCur(summaryData.balance)}</span>
+            <span className="text-[9px] text-amber-500">Fr: {formatCur(summaryData.frozen)}</span>
           </div>
 
-          {/* Connector */}
-          <div className="flex-1 h-0.5 bg-gradient-to-r from-emerald-500 via-purple-500 to-purple-500 mt-6 mx-2 rounded-full opacity-50" />
-
-          {/* Bet */}
-          <div className="flex flex-col items-center relative">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-2 shadow-lg shadow-purple-500/20">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Bet</span>
-            <span className="text-xs text-gray-500">14:42</span>
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Game Profit</span>
+            <span className={`text-xs font-bold ${colorCur(summaryData.gameProfit)}`}>{formatCur(summaryData.gameProfit)}</span>
+            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sport: {formatCur(summaryData.sportProfit)}</span>
           </div>
 
-          {/* Connector */}
-          <div className="flex-1 h-0.5 bg-gradient-to-r from-purple-500 via-amber-500 to-amber-500 mt-6 mx-2 rounded-full opacity-50" />
-
-          {/* Withdrawal */}
-          <div className="flex flex-col items-center relative">
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-2 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/50 ring-offset-2 ${darkMode ? 'ring-offset-gray-900' : 'ring-offset-white'}`}>
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-amber-400">Withdrawal</span>
-            <span className="text-xs text-amber-400/70">PENDING</span>
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Deposits ({summaryData.deposits.count})</span>
+            <span className="text-xs font-bold text-emerald-500">{formatCur(summaryData.deposits.value)}</span>
+            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg: {formatCur(summaryData.deposits.value / summaryData.deposits.count)}</span>
           </div>
+
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Withdrawals ({summaryData.withdrawals.count})</span>
+            <span className="text-xs font-bold text-red-500">{formatCur(summaryData.withdrawals.value)}</span>
+            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Fees: {formatCur(summaryData.paymentFees)}</span>
+          </div>
+
+          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Bonuses</span>
+            <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{formatCur(summaryData.totalBonus)}</span>
+            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Encash: {formatCur(summaryData.bonusEncash)}</span>
+          </div>
+
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className={`rounded-2xl overflow-hidden transition-colors duration-300 ${darkMode ? 'glass' : 'bg-white border border-gray-200 shadow-sm'}`}>
-        <div className={`p-6 border-b ${darkMode ? 'border-white/5' : 'border-gray-100'}`}>
-          <div className="flex items-center justify-between">
-            <h3 className={`text-lg font-semibold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              Transaction History
-            </h3>
-            <div className="flex items-center gap-2">
-              <button className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${darkMode ? 'bg-white/5 hover:bg-white/10 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
-                Export CSV
-              </button>
-            </div>
+      {/* ===== ТРАНЗАКЦИИ И ИГРОВАЯ ИСТОРИЯ ===== */}
+      <div className={`rounded-xl border shadow-sm overflow-hidden ${darkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white border-gray-200'}`}>
+        <div className={`p-3 border-b flex items-center justify-between ${darkMode ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
+          <h3 className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <CreditCard className="w-3.5 h-3.5" /> Activity Log
+          </h3>
+          <div className="flex gap-2">
+            <button className={`px-2 py-1 text-[9px] font-medium rounded border ${darkMode ? 'border-white/10 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-100'}`}>Export CSV</button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className={`text-left text-xs uppercase tracking-wider ${darkMode ? 'text-gray-500 bg-white/[0.02]' : 'text-gray-400 bg-gray-50'}`}>
-                <th className="px-6 py-4 font-medium">Date & Time</th>
-                <th className="px-6 py-4 font-medium">Type</th>
-                <th className="px-6 py-4 font-medium">Method</th>
-                <th className="px-6 py-4 font-medium text-right">Amount</th>
-                <th className="px-6 py-4 font-medium text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y ${darkMode ? 'divide-white/5' : 'divide-gray-100'}`}>
-              <tr className={`group transition-colors ${darkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Today, 14:47</div>
-                  <div className="text-xs text-gray-500">2 minutes ago</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-amber-400 text-sm font-medium">Withdrawal</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center">
-                      <span className="text-xs text-cyan-400">B</span>
-                    </div>
-                    <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>Crypto (BTC)</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-red-400 font-mono font-medium">-R$ 2,500.00</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    Pending
-                  </span>
-                </td>
-              </tr>
-              <tr className={`group transition-colors ${darkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Today, 14:35</div>
-                  <div className="text-xs text-gray-500">14 minutes ago</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-emerald-400 text-sm font-medium">Deposit</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-xs font-bold text-emerald-400">P</span>
-                    </div>
-                    <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>Pix</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-emerald-400 font-mono font-medium">+R$ 3,000.00</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Completed
-                  </span>
-                </td>
-              </tr>
-              <tr className={`group transition-colors ${darkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Yesterday, 19:22</div>
-                  <div className="text-xs text-gray-500">19 hours ago</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-amber-400 text-sm font-medium">Withdrawal</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-xs font-bold text-emerald-400">P</span>
-                    </div>
-                    <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>Pix</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-red-400 font-mono font-medium">-R$ 1,000.00</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Completed
-                  </span>
-                </td>
-              </tr>
-              <tr className={`group transition-colors ${darkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Yesterday, 18:05</div>
-                  <div className="text-xs text-gray-500">21 hours ago</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-emerald-400 text-sm font-medium">Deposit</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center">
-                      <span className="text-xs text-cyan-400">U</span>
-                    </div>
-                    <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>Crypto (USDT)</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-emerald-400 font-mono font-medium">+R$ 5,000.00</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Completed
-                  </span>
-                </td>
-              </tr>
-              <tr className={`group transition-colors ${darkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Jan 15, 2025</div>
-                  <div className="text-xs text-gray-500">3 days ago</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-amber-400 text-sm font-medium">Withdrawal</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-xs font-bold text-emerald-400">P</span>
-                    </div>
-                    <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>Pix</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="text-red-400 font-mono font-medium">-R$ 800.00</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                    Rejected
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div className="flex flex-col">
+          {transactions.map((tx) => {
 
-        {/* Pagination */}
-        <div className={`px-6 py-4 border-t flex items-center justify-between ${darkMode ? 'border-white/5' : 'border-gray-100'}`}>
-          <span className="text-sm text-gray-500">Showing 5 of 48 transactions</span>
-          <div className="flex items-center gap-1">
-            <button className={`p-2 rounded-lg text-gray-400 transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button className={`w-8 h-8 rounded-lg text-sm font-medium ${darkMode ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'}`}>1</button>
-            <button className={`w-8 h-8 rounded-lg text-gray-400 text-sm font-medium transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-              2
-            </button>
-            <button className={`w-8 h-8 rounded-lg text-gray-400 text-sm font-medium transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-              3
-            </button>
-            <span className="text-gray-500 px-2">...</span>
-            <button className={`w-8 h-8 rounded-lg text-gray-400 text-sm font-medium transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-              10
-            </button>
-            <button className={`p-2 rounded-lg text-gray-400 transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+            // --- ДЕПОЗИТ ---
+            if (tx.type === "deposit") return (
+              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3 shrink-0">
+                  <ArrowDownRight className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                  <div>
+                    <div className="text-[11px] font-bold text-emerald-500">DEPOSIT</div>
+                    <div className="text-[9px] text-gray-500">{tx.date}</div>
+                  </div>
+                  <div>
+                    <div className={`text-[11px] font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.method}</div>
+                    {tx.bonusCode && <div className="text-[9px] text-amber-500 flex items-center gap-0.5"><Ticket className="w-2.5 h-2.5"/> {tx.bonusCode}</div>}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] text-gray-500">Balance Shift</div>
+                    <div className="text-[10px] font-mono text-gray-400">{formatCur(tx.balanceBefore!)} → <span className={darkMode?'text-white':'text-black'}>{formatCur(tx.balanceAfter!)}</span></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-emerald-500">+{formatCur(tx.amount)}</div>
+                  </div>
+                </div>
+              </div>
+            )
+
+            // --- ВЫПЛАТА ---
+            if (tx.type === "withdrawal") return (
+              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 shrink-0">
+                  <ArrowUpRight className="w-4 h-4 text-red-500" />
+                </div>
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                  <div>
+                    <div className="text-[11px] font-bold text-red-500">WITHDRAWAL</div>
+                    <div className="text-[9px] text-gray-500">{tx.date}</div>
+                  </div>
+                  <div>
+                    <div className={`text-[11px] font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.method}</div>
+                    <div className="text-[9px] text-amber-500">{tx.status}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] text-gray-500">Balance Shift</div>
+                    <div className="text-[10px] font-mono text-gray-400">{formatCur(tx.balanceBefore!)} → <span className={darkMode?'text-white':'text-black'}>{formatCur(tx.balanceAfter!)}</span></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-red-500">{formatCur(tx.amount)}</div>
+                  </div>
+                </div>
+              </div>
+            )
+
+            // --- СПОРТ СТАВКА ---
+            if (tx.type === "sport") return (
+              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center mr-3 shrink-0">
+                  <Trophy className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                  <div>
+                    <div className="text-[11px] font-bold text-indigo-400">SPORT BET</div>
+                    <div className="text-[9px] font-mono text-gray-500">{tx.betId} | {tx.date}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className={`text-[11px] font-medium truncate ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.event}</div>
+                    <div className="text-[9px] text-gray-500 truncate">{tx.market} <span className="font-bold text-amber-500 mx-1">@{tx.odds?.toFixed(2)}</span></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] text-gray-500">Amount / Profit</div>
+                    <div className="text-[11px] font-bold flex items-center justify-end gap-1">
+                      <span className="text-gray-400">{formatCur(tx.amount)}</span> / 
+                      <span className={tx.profit! > 0 ? "text-emerald-500" : "text-red-500"}>{tx.profit! > 0 ? '+' : ''}{formatCur(tx.profit!)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+
+            // --- КАЗИНО ГРУППА (СЛОТЫ) ---
+            if (tx.type === "casino_group") {
+              const isExpanded = expandedGroups.includes(tx.id)
+              return (
+                <div key={tx.id} className={`border-b border-dashed ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+                  {/* Заголовок группы */}
+                  <div 
+                    onClick={() => toggleGroup(tx.id)}
+                    className={`flex items-center p-3 cursor-pointer select-none transition-colors ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'} ${isExpanded ? (darkMode ? 'bg-white/5' : 'bg-gray-50') : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center mr-3 shrink-0">
+                      <Gamepad2 className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                      <div>
+                        <div className="text-[11px] font-bold text-purple-400">CASINO SESSION</div>
+                        <div className="text-[9px] text-gray-500">{tx.date}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <div className={`text-[11px] font-medium truncate ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.game}</div>
+                        <div className="text-[9px] text-gray-500">{tx.totalBets} spins</div>
+                      </div>
+                      <div className="text-right flex items-center justify-end gap-2">
+                        <div>
+                          <div className="text-[9px] text-gray-500">Turnover / Profit</div>
+                          <div className="text-[11px] font-bold flex items-center justify-end gap-1">
+                            <span className="text-gray-400">{formatCur(tx.totalAmount!)}</span> / 
+                            <span className={tx.totalProfit! > 0 ? "text-emerald-500" : "text-red-500"}>{formatCur(tx.totalProfit!)}</span>
+                          </div>
+                        </div>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 ml-2" /> : <ChevronDown className="w-4 h-4 text-gray-400 ml-2" />}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Раскрывающийся список спинов */}
+                  {isExpanded && (
+                    <div className={`pl-14 pr-3 py-2 text-[10px] ${darkMode ? 'bg-black/20' : 'bg-gray-100/50'}`}>
+                      <div className="grid grid-cols-4 gap-2 mb-1 text-gray-500 uppercase tracking-wider font-bold">
+                        <div>Time</div>
+                        <div className="text-right">Bet</div>
+                        <div className="text-right">Win</div>
+                        <div className="text-right">Net Profit</div>
+                      </div>
+                      {tx.sessionDetails?.map(spin => (
+                        <div key={spin.id} className={`grid grid-cols-4 gap-2 py-1 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-gray-200'}`}>
+                          <div className="font-mono text-gray-400">{spin.time}</div>
+                          <div className="text-right text-gray-400">{formatCur(spin.amount)}</div>
+                          <div className="text-right text-emerald-500">{spin.profit > 0 ? formatCur(spin.profit) : '-'}</div>
+                          <div className={`text-right font-bold ${spin.profit > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {formatCur(spin.amount + spin.profit)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            return null
+          })}
         </div>
       </div>
-
-      <style jsx>{`
-        .glass {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-      `}</style>
     </div>
   )
 }
