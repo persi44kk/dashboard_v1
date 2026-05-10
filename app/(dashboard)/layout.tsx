@@ -9,6 +9,7 @@ import { ScrollText, Settings, Search, Sun, Moon, X } from "lucide-react"
 // --- ГЛОБАЛЬНОЕ ХРАНИЛИЩЕ ДАННЫХ И ЛОГОВ ---
 export const PlayerContext = createContext<any>(null)
 export const usePlayerStore = () => useContext(PlayerContext)
+export const useTheme = () => useContext(PlayerContext)
 
 const initialPlayerData = {
   id: "8481209",
