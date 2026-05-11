@@ -2,9 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect, createContext, useContext, type ReactNode } from "react"
+import { useState, createContext, useContext, type ReactNode } from "react"
 import { AccountSettingsModal } from "@/components/account-settings-modal"
-import { ScrollText, Settings, Search, Sun, Moon, X } from "lucide-react"
+import { 
+  ScrollText, Settings, Sun, Moon, X, 
+  LayoutDashboard, Wallet, ShieldAlert, Dices, Trophy // Новые иконки для боковой панели
+} from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // --- ГЛОБАЛЬНОЕ ХРАНИЛИЩЕ ДАННЫХ И ЛОГОВ ---
 export const PlayerContext = createContext<any>(null)
@@ -19,7 +23,6 @@ const initialPlayerData = {
   manualStatus: "Normal",
   exVIP: false,
   exGold: false,
-  status: "Open",
   segmentation: { sport: "Mainly Sport", casino: "Tried Casino" },
   financials: { balance: 1500.00, overallIncome: 250.00, currency: "R$" },
   personal: {
@@ -29,7 +32,6 @@ const initialPlayerData = {
     cpf: "123.456.789-00",
     qiwi: "N/A"
   },
-  // Добавили департаменты в глобальный стейт
   departments: {
     casino: { status: "approved", text: "Verified, normal slots activity" },
     rpf: { status: "warning", text: "Multiple IP changes detected" },
@@ -55,15 +57,24 @@ const statusOptions =[
   { id: "lock-underage", label: "Lock - Underage", isLock: true },
 ]
 
+// Конфиг для боковой панели навигации
+const navItems =[
+  { name: "Info Summary", href: "/", icon: LayoutDashboard },
+  { name: "Finance & Gameplay", href: "/history", icon: Wallet },
+  { name: "Risk / Payment / Fraud", href: "/rpf", icon: ShieldAlert },
+  { name: "Casino Fraud Team", href: "/casino-fraud", icon: Dices },
+  { name: "Sportbook", href: "/sportbook", icon: Trophy },
+]
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [darkMode, setDarkMode] = useState(true)
-  const[settingsModalOpen, setSettingsModalOpen] = useState(false)
-  const [logsOpen, setLogsOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const[logsOpen, setLogsOpen] = useState(false)
   const pathname = usePathname()
 
-  const [playerData, setPlayerData] = useState(initialPlayerData)
+  const[playerData, setPlayerData] = useState(initialPlayerData)
   const [logs, setLogs] = useState(initialLogs)
-  const[statusDropdownOpen, setStatusDropdownOpen] = useState(false)
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["open"])
 
   const addLog = (action: string, oldVal: string, newVal: string, by: string) => {
@@ -72,13 +83,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       date: new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       action, old: oldVal, new: newVal, by
     }
-    setLogs(prev =>[newLog, ...prev])
+    setLogs(prev => [newLog, ...prev])
   }
 
   const updatePlayerField = (category: string | null, field: string, value: any, by = "Operator #5") => {
     setPlayerData(prev => {
       const oldVal = category ? prev[category][field] : prev[field]
-      // Для сложных объектов (типа статуса департментов)
       if (typeof value === 'object' && value !== null) {
         addLog(`Updated ${field}`, "Old Status", value.status, by)
         return { ...prev, [category as string]: { ...prev[category as string], [field]: value } }
@@ -98,13 +108,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     } else {
       setSelectedStatuses(prev => {
         const withoutOpen = prev.filter(id => id !== "open")
-        let newStatuses
-        if (prev.includes(statusId)) {
-          newStatuses = withoutOpen.filter(id => id !== statusId)
-          if (newStatuses.length === 0) newStatuses = [statusId]
-        } else {
-          newStatuses = [...withoutOpen, statusId]
-        }
+        let newStatuses = prev.includes(statusId) ? withoutOpen.filter(id => id !== statusId) : [...withoutOpen, statusId]
+        if (newStatuses.length === 0) newStatuses = [statusId]
         addLog("Account Status", prev.join(", "), newStatuses.join(", "), "Operator #5")
         return newStatuses
       })
@@ -114,32 +119,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const hasLockStatus = selectedStatuses.some(id => statusOptions.find(s => s.id === id)?.isLock)
   const statusDisplayText = selectedStatuses.map(id => statusOptions.find(s => s.id === id)?.label).filter(Boolean).join(", ")
 
-  const tabs =[
-    { name: "Info", href: "/" },
-    { name: "Finance & Gameplay", href: "/history" },
-    { name: "Risk/Payment/Fraud", href: "/rpf" },
-    { name: "Casino Fraud", href: "/casino-fraud" },
-    { name: "Sportbook", href: "/sportbook" },
-  ]
-
   const displayName = playerData.firstName || playerData.lastName ? `${playerData.firstName || 'N/A'} ${playerData.lastName || 'N/A'}` : "N/A N/A"
   const isIncomePositive = playerData.financials.overallIncome > 0
   const incomeColorClass = isIncomePositive ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
 
   const generateAlerts = () => {
-    const alerts = ["Password Changed", "IP Changed"]
+    const alerts =["Password Changed", "IP Changed"]
     if (playerData.financials.overallIncome > 200) alerts.push("Missing Docs: Sport")
     return alerts
   }
 
   return (
     <PlayerContext.Provider value={{ playerData, updatePlayerField, logs, addLog, darkMode, setDarkMode }}>
-      {/* СМЯГЧИЛИ ТЕМНУЮ ТЕМУ: bg-slate-900 вместо bg-gray-950 */}
       <div className={`min-h-screen antialiased transition-colors duration-300 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-gray-100 text-gray-900'}`}>
         
         <div className="relative z-10 pb-20">
-          {/* HEADER: bg-slate-800 */}
-          <header className={`sticky top-0 z-40 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-b border-white/5' : 'bg-white border-b border-gray-200 shadow-sm'}`}>
+          
+          {/* HEADER */}
+          <header className={`sticky top-0 z-40 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-b border-white/5 shadow-md' : 'bg-white border-b border-gray-200 shadow-sm'}`}>
             <div className="max-w-[98%] mx-auto px-2 py-2">
               <div className="flex items-center justify-between">
                 
@@ -150,13 +147,36 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   </div>
                   <span className="font-semibold text-xs">{displayName}</span>
                   
+                  {/* Дропдаун Аккаунт Статуса переехал сюда! */}
+                  <div className="relative ml-1">
+                    <button onClick={() => setStatusDropdownOpen(!statusDropdownOpen)} className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${hasLockStatus ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${hasLockStatus ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                      {statusDisplayText}
+                    </button>
+                    {statusDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setStatusDropdownOpen(false)} />
+                        <div className={`absolute left-0 mt-1 w-48 rounded-lg overflow-hidden shadow-xl z-50 ${darkMode ? 'bg-slate-800 border border-white/5' : 'bg-white border border-gray-200'}`}>
+                          {statusOptions.map((status) => {
+                            const isSelected = selectedStatuses.includes(status.id)
+                            return (
+                              <button key={status.id} onClick={() => toggleAccountStatus(status.id)} className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] text-left transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}`}>
+                                <div className={`w-3 h-3 rounded-sm border flex items-center justify-center ${isSelected ? (status.isLock ? 'bg-red-500 border-red-500' : 'bg-emerald-500 border-emerald-500') : (darkMode ? 'border-slate-600' : 'border-gray-300')}`}>
+                                  {isSelected && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                </div>
+                                <span className={isSelected ? (status.isLock ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold') : (darkMode ? 'text-slate-300' : 'text-gray-700')}>{status.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   {playerData.manualStatus !== "Normal" && (
-                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${playerData.manualStatus === 'VIP' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
-                      {playerData.manualStatus}
-                    </span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${playerData.manualStatus === 'VIP' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>{playerData.manualStatus}</span>
                   )}
                   {playerData.exVIP && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-500/20 text-slate-400 border border-slate-500/30">EX-VIP</span>}
-                  {playerData.exGold && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-500/20 text-slate-400 border border-slate-500/30">EX-GOLD</span>}
                   
                   <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-200 text-gray-600'}`}>{playerData.segmentation.sport}</span>
 
@@ -197,54 +217,47 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <div className="max-w-[98%] mx-auto px-2 pt-2">
-            <div className="flex items-center justify-between">
-              <div className={`rounded-lg p-1 inline-flex transition-colors ${darkMode ? 'bg-slate-800 border border-white/5 shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}`}>
-                {tabs.map((tab) => {
-                  const isActive = pathname === tab.href
+          {/* ОСНОВНАЯ СТРУКТУРА: ЛЕВОЕ МЕНЮ И КОНТЕНТ */}
+          <div className="max-w-[98%] mx-auto pt-4 flex items-start gap-4">
+            
+            {/* БОКОВАЯ ПАНЕЛЬ ИКОНОК (Sidebar) */}
+            <aside className={`sticky top-20 flex flex-col items-center gap-2 p-2 rounded-xl border shadow-sm ${darkMode ? 'bg-slate-800 border-white/5' : 'bg-white border-gray-200'}`}>
+              <TooltipProvider delayDuration={0}>
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href
                   return (
-                    <Link key={tab.href} href={tab.href} className={`px-3 py-1 rounded-md text-[11px] font-medium transition-colors ${isActive ? (darkMode ? 'bg-slate-700 text-white' : 'bg-gray-100 text-gray-900') : (darkMode ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>
-                      {tab.name}
-                    </Link>
+                    <Tooltip key={item.href}>
+                      <TooltipTrigger asChild>
+                        <Link 
+                          href={item.href} 
+                          className={`p-2.5 rounded-lg transition-all duration-200 ${
+                            isActive 
+                              ? (darkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600') 
+                              : (darkMode ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
+                          }`}
+                        >
+                          <item.icon className="w-5 h-5" />
+                        </Link>
+                      </TooltipTrigger>
+                      {/* Тултип (Всплывающее название) */}
+                      <TooltipContent side="right" className={`text-xs ml-2 border-none shadow-lg ${darkMode ? 'bg-slate-700 text-white' : 'bg-gray-800 text-white'}`}>
+                        {item.name}
+                      </TooltipContent>
+                    </Tooltip>
                   )
                 })}
-              </div>
+              </TooltipProvider>
+            </aside>
 
-              <div className="flex items-center gap-2">
-                <span className={`text-[11px] uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-gray-400'}`}>Account Status:</span>
-                <div className="relative">
-                  <button onClick={() => setStatusDropdownOpen(!statusDropdownOpen)} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all ${hasLockStatus ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${hasLockStatus ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                    {statusDisplayText}
-                  </button>
-                  {statusDropdownOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setStatusDropdownOpen(false)} />
-                      <div className={`absolute right-0 mt-1 w-48 rounded-lg overflow-hidden shadow-xl z-50 ${darkMode ? 'bg-slate-800 border border-white/5' : 'bg-white border border-gray-200'}`}>
-                        {statusOptions.map((status) => {
-                          const isSelected = selectedStatuses.includes(status.id)
-                          return (
-                            <button key={status.id} onClick={() => toggleAccountStatus(status.id)} className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] text-left transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}`}>
-                              <div className={`w-3 h-3 rounded-sm border flex items-center justify-center ${isSelected ? (status.isLock ? 'bg-red-500 border-red-500' : 'bg-emerald-500 border-emerald-500') : (darkMode ? 'border-slate-600' : 'border-gray-300')}`}>
-                                {isSelected && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
-                              </div>
-                              <span className={isSelected ? (status.isLock ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold') : (darkMode ? 'text-slate-300' : 'text-gray-700')}>{status.label}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* ДИНАМИЧЕСКИЙ КОНТЕНТ */}
+            <main className="flex-1 min-w-0 pb-10">
+              {children}
+            </main>
           </div>
 
-          <main className="max-w-[98%] mx-auto px-2 py-2">
-            {children}
-          </main>
         </div>
 
+        {/* FLOATING ACTION BUTTONS */}
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className={`rounded-full px-2 py-1.5 flex items-center gap-2 shadow-2xl ${darkMode ? 'bg-slate-800/90 backdrop-blur-xl border border-white/10 shadow-black/50' : 'bg-white/90 backdrop-blur-xl border border-gray-200 shadow-gray-300/50'}`}>
             <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-medium text-[11px] shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all hover:-translate-y-0.5 active:translate-y-0">
@@ -256,6 +269,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
+        {/* AUDIT LOG SIDEBAR */}
         {logsOpen && (
           <>
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" onClick={() => setLogsOpen(false)} />
