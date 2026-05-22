@@ -2,280 +2,392 @@
 
 import { useState } from "react"
 import { usePlayerStore } from "../layout"
-import { 
-  ArrowDownRight, ArrowUpRight, Gamepad2, Trophy, 
-  ChevronDown, ChevronUp, Ticket, CreditCard, Banknote
-} from "lucide-react"
+import { Monitor, Smartphone, ChevronDown, ChevronUp, AlertCircle, Search } from "lucide-react"
 
-// --- МОКОВЫЕ ДАННЫЕ ---
-const summaryData = {
-  hold: { value: -4804.02, percent: "-35.24%" },
-  balance: 1300.04,
-  frozen: 1300.00,
-  available: 0.04,
-  stakes: { count: 0, value: 0.00 },
-  wins: { count: 0, value: 0.00 },
-  sportProfit: 0.00,
-  gameProfit: -4804.02,
-  withdrawals: { count: 9, value: 17137.00 },
-  deposits: { count: 57, value: 13633.00 },
-  correctionTo: { count: 0, value: 0.00 },
-  correctionFrom: { count: 0, value: 0.00 },
-  totalBonus: 0.00,
-  bonusDeposit: 0.00,
-  leaderboard: 0.00,
-  bonusEncash: 0.00,
-  paymentFees: 515.52
-}
-
-const transactions =[
+// --- МОКОВЫЕ ДАННЫЕ (Расширенные под новые требования) ---
+// Мы создаем массив транзакций, объединяющий спорт, казино и платежи из HTML-референсов
+const transactions = [
   {
-    id: "tx_1", type: "withdrawal", date: "10 May 2026, 14:30",
-    method: "Pix", amount: -1500.00, balanceBefore: 2800.04, balanceAfter: 1300.04, status: "Completed"
-  },
-  {
-    id: "tx_2", type: "deposit", date: "09 May 2026, 09:15",
-    method: "Crypto (USDT)", amount: 3000.00, bonusCode: "WELCOME100", balanceBefore: 1200.04, balanceAfter: 4200.04, status: "Completed"
-  },
-  {
-    id: "tx_3", type: "sport", date: "08 May 2026, 20:45",
-    betId: "SB-99214", event: "Real Madrid vs Bayern Munich", market: "1X2 (Real Madrid)", odds: 1.85, 
-    amount: -1000.00, profit: 850.00, outcome: "win", balanceAfter: 1200.04
-  },
-  {
-    id: "tx_4", type: "casino_group", date: "08 May 2026, 18:00 - 19:30",
-    game: "Sweet Bonanza (Pragmatic)", totalBets: 45, totalAmount: -450.00, totalProfit: -450.00, outcome: "lose",
-    sessionDetails:[
-      { id: "sp_1", time: "19:28", amount: -10.00, profit: 0, outcome: "lose" },
-      { id: "sp_2", time: "19:25", amount: -10.00, profit: 15.50, outcome: "win" },
-      { id: "sp_3", time: "19:21", amount: -10.00, profit: 0, outcome: "lose" },
-      // ... еще 42 спина скрыты для примера
+    id: "tx_1",
+    dateGroup: "26 March 2026",
+    time: "13:28:22",
+    device: "Web",
+    type: "withdrawal",
+    category: "payment",
+    title: "Withdrawal",
+    subtitle: "ID 440819378",
+    statusTitle: "Declined",
+    statusSubtitle: "Bova • P2P • Available • Credit Cards 2204... • Алена Кабак",
+    statusColor: "text-red-500",
+    balance: 256850.00,
+    amountLabel: "+75 000.00 RUB",
+    amountColor: "text-emerald-500",
+    labels: [
+      { text: "M", type: "danger" }
+    ],
+    // Данные для выпадающей таблицы Payments Table
+    paymentDetails: [
+      { method: "BANK_WIRE", purse: "2204...6116 (1)", owner: "Алена Кабак", firstDep: "10.05.26", lastDep: "10.05.26", lastWith: "10.05.26", depSum: "0.00", withSum: "75 000.00", isCurrent: true }
     ]
   },
   {
-    id: "tx_5", type: "sport", date: "07 May 2026, 15:10",
-    betId: "SB-98822", event: "Lakers vs Celtics", market: "Total Over 210.5", odds: 1.90, 
-    amount: -500.00, profit: -500.00, outcome: "lose", balanceAfter: 200.04
+    id: "tx_2",
+    dateGroup: "25 March 2026",
+    time: "18:56:09",
+    device: "Web",
+    type: "bonus",
+    category: "bonus",
+    title: "Sport Bonus Write-Off",
+    subtitle: "ID 28265704",
+    statusTitle: "Esports 200% Reload 2026",
+    statusSubtitle: "✓ Successful • Withdrawal bonus to main account",
+    statusColor: "text-emerald-500",
+    balance: 100000.00,
+    amountLabel: "+100 000.00 RUB",
+    amountColor: "text-emerald-500",
+    wager: "S"
+  },
+  {
+    id: "tx_3",
+    dateGroup: "25 March 2026",
+    time: "14:24:10",
+    device: "App",
+    type: "sport",
+    category: "sport",
+    title: "Bet Single • Prematch",
+    subtitle: "ID 133410352534",
+    statusTitle: "Odd 1.62",
+    statusSubtitle: "Lost",
+    statusColor: "text-red-500",
+    balance: 196850.00,
+    amountLabel: "−40 000.00 RUB",
+    amountColor: "text-red-500",
+    sportDetails: { event: "Киберспорт - Dota 2 - ESL One", market: "BB Team - GamerLegion - Фора", runner: "2 (+1.5)" }
+  },
+  {
+    id: "tx_4",
+    dateGroup: "25 March 2026",
+    time: "07:06:00",
+    device: "Web",
+    type: "withdrawal",
+    category: "payment",
+    title: "Withdrawal",
+    subtitle: "ID 444699767",
+    statusTitle: "Executed",
+    statusSubtitle: "MonetixPix • Available • Viana Fernanda",
+    statusColor: "text-emerald-500",
+    balance: 171.10,
+    amountLabel: "-100.00 BRL",
+    amountColor: "text-red-500",
+    labels: [
+      { text: "New wallet", type: "info" },
+      { text: "M", type: "danger" },
+      { text: "Check Purse", type: "warning", isClickable: true } // Кликабельный лейбл для интерактива
+    ],
+    paymentDetails: [
+      { method: "BANK_WIRE", purse: "119...8626 (2)", owner: "Viana Fernanda", firstDep: "10.05.26", lastDep: "12.05.26", lastWith: "12.05.26", depSum: "0.00", withSum: "131.10", isCurrent: true, flag: "Check" }
+    ]
+  },
+  {
+    id: "tx_5",
+    dateGroup: "24 March 2026",
+    time: "04:08:08",
+    device: "Web",
+    type: "casino",
+    category: "casino",
+    title: "Casino • Evolution",
+    subtitle: "7 sessions • 04:08:08–06:15:57",
+    statusTitle: "Stake 460.00 BRL • Win sum 417.35 BRL",
+    statusSubtitle: "Avg. Stake 23.00 BRL • RTP 90.73%",
+    statusColor: "text-gray-500",
+    balance: 1160.00,
+    amountLabel: "-42.65 BRL",
+    amountColor: "text-red-500",
+    casinoDetails: [
+      { time: "06:15:33", game: "Dragon Dragon", rounds: "1 round", stake: 15.00, win: 9.75, rtp: "65.00%", bal: 139.10, diff: -5.25 },
+      { time: "06:13:21", game: "Brazilian Bac Bo", rounds: "3 rounds", stake: 60.00, win: 97.00, rtp: "161.67%", bal: 125.60, diff: 37.00 },
+    ]
+  },
+  {
+    id: "tx_6",
+    dateGroup: "24 March 2026",
+    time: "02:48:45",
+    device: "Web",
+    type: "deposit",
+    category: "deposit",
+    title: "Deposit",
+    subtitle: "ID 444691532",
+    statusTitle: "Executed",
+    statusSubtitle: "ID Order: 67689692908844",
+    statusColor: "text-emerald-500",
+    balance: 0.00,
+    amountLabel: "+200.00 BRL",
+    amountColor: "text-emerald-500",
+    labels: [
+      { text: "Change Password", type: "danger" },
+      { text: "New Device", type: "warning" }
+    ]
   }
 ]
 
 export default function HistoryPage() {
-  const { darkMode } = usePlayerStore()
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+  // Получаем функции и состояние из глобального контекста
+  const { darkMode, addLog } = usePlayerStore()
+  // Локальный стейт для управления раскрытием аккордеонов (детализацией транзакций)
+  const [expandedRows, setExpandedRows] = useState<string[]>([])
 
-  const toggleGroup = (id: string) => {
-    setExpandedGroups(prev => prev.includes(id) ? prev.filter(g => g !== id) :[...prev, id])
+  // Функция переключения состояния строки (открыто/закрыто)
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])
+  }
+
+  // Функция-обработчик клика по подозрительным лейблам (Связь с Audit Log)
+  const handleLabelClick = (e: React.MouseEvent, label: string, txId: string) => {
+    e.stopPropagation() // Останавливаем всплытие, чтобы не открыть дропдаун
+    // Записываем действие в глобальный лог
+    addLog(`Investigated Flag`, `None`, label, "Operator #5")
+    alert(`Флаг "${label}" отправлен в Audit Log для транзакции ${txId}!`)
   }
 
   // Хелпер для форматирования валюты
-  const formatCur = (val: number) => `${val < 0 ? '-' : ''}${Math.abs(val).toLocaleString('en-US', {minimumFractionDigits: 2})} BRL`
-  const colorCur = (val: number) => val > 0 ? "text-emerald-500" : val < 0 ? "text-red-500" : (darkMode ? "text-gray-400" : "text-gray-500")
+  const formatCur = (val: number) => val.toLocaleString('en-US', { minimumFractionDigits: 2 })
+
+  // Функция для определения цветовой схемы строки в зависимости от типа транзакции
+  const getRowColors = (category: string) => {
+    switch (category) {
+      case 'casino':
+        return darkMode ? 'bg-emerald-950/20 border-emerald-500/50' : 'bg-[#f0f9eb] border-[#67c23a]'
+      case 'bonus':
+        return darkMode ? 'bg-blue-950/20 border-blue-500/50' : 'bg-[#d9ecff] border-[#409eff]'
+      case 'deposit':
+        return darkMode ? 'bg-amber-950/20 border-amber-500/50' : 'bg-[#faecd8] border-[#e6a23c]'
+      case 'payment': // Withdrawal
+        return darkMode ? 'bg-slate-800/50 border-teal-500/50' : 'bg-white border-[#1fb3aa]'
+      case 'sport':
+      default:
+        return darkMode ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-[#c0c4cc]'
+    }
+  }
+
+  // Группировка транзакций по дате
+  const groupedTransactions = transactions.reduce((acc, tx) => {
+    if (!acc[tx.dateGroup]) acc[tx.dateGroup] = []
+    acc[tx.dateGroup].push(tx)
+    return acc
+  }, {} as Record<string, typeof transactions>)
 
   return (
-    <div className="space-y-3">
-      
-      {/* ===== БЛОК SUMMARY ===== */}
-      <div className={`rounded-xl p-3 border shadow-sm ${darkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white border-gray-200'}`}>
-        <h3 className={`text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          <Banknote className="w-3.5 h-3.5" /> Financial Summary
-        </h3>
-        
-        {/* Плотный Grid для данных */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-          
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Hold</span>
-            <span className={`text-xs font-bold ${colorCur(summaryData.hold.value)}`}>{formatCur(summaryData.hold.value)}</span>
-            <span className="text-[9px] text-gray-500">{summaryData.hold.percent}</span>
-          </div>
-
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Balance / Frozen</span>
-            <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{formatCur(summaryData.balance)}</span>
-            <span className="text-[9px] text-amber-500">Fr: {formatCur(summaryData.frozen)}</span>
-          </div>
-
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Game Profit</span>
-            <span className={`text-xs font-bold ${colorCur(summaryData.gameProfit)}`}>{formatCur(summaryData.gameProfit)}</span>
-            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sport: {formatCur(summaryData.sportProfit)}</span>
-          </div>
-
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Deposits ({summaryData.deposits.count})</span>
-            <span className="text-xs font-bold text-emerald-500">{formatCur(summaryData.deposits.value)}</span>
-            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg: {formatCur(summaryData.deposits.value / summaryData.deposits.count)}</span>
-          </div>
-
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Withdrawals ({summaryData.withdrawals.count})</span>
-            <span className="text-xs font-bold text-red-500">{formatCur(summaryData.withdrawals.value)}</span>
-            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Fees: {formatCur(summaryData.paymentFees)}</span>
-          </div>
-
-          <div className={`p-2 rounded flex flex-col justify-center border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-            <span className="text-[9px] uppercase text-gray-500 mb-0.5">Bonuses</span>
-            <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{formatCur(summaryData.totalBonus)}</span>
-            <span className={`text-[9px] ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Encash: {formatCur(summaryData.bonusEncash)}</span>
-          </div>
-
+    <div className="space-y-4">
+      {/* 
+        ===== HEADER КОЛОНОК ===== 
+        Реализуем жесткую сетку, как в HTML-референсе. 
+        Ширины зафиксированы: 77px, 165px, 102px, 130px, 40px. 
+      */}
+      <div className={`flex items-center px-4 py-2 border-b text-[9px] font-bold uppercase tracking-wider ${darkMode ? 'border-white/10 text-slate-500 bg-slate-800/50' : 'border-[#ebeef5] text-[#94a3b8] bg-[#f7fbff]'}`}>
+        <div className="w-[77px] shrink-0 mr-3"></div>
+        <div className="flex flex-1 min-w-0 pr-3">
+          <div className="w-[165px] shrink-0 pr-4">Type</div>
+          <div className={`w-px mx-2 shrink-0 ${darkMode ? 'bg-white/10' : 'bg-[#ebeef5]'}`} />
+          <div className="flex-1 min-w-0">Status</div>
         </div>
+        <div className="flex items-baseline">
+          <div className="w-[102px] shrink-0 text-right mr-4">Av.Bal.</div>
+          <div className="w-[130px] shrink-0 text-right">Amount</div>
+        </div>
+        <div className="w-[40px] shrink-0 text-right ml-2">Wager</div>
       </div>
 
-      {/* ===== ТРАНЗАКЦИИ И ИГРОВАЯ ИСТОРИЯ ===== */}
-      <div className={`rounded-xl border shadow-sm overflow-hidden ${darkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white border-gray-200'}`}>
-        <div className={`p-3 border-b flex items-center justify-between ${darkMode ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
-          <h3 className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            <CreditCard className="w-3.5 h-3.5" /> Activity Log
-          </h3>
-          <div className="flex gap-2">
-            <button className={`px-2 py-1 text-[9px] font-medium rounded border ${darkMode ? 'border-white/10 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-100'}`}>Export CSV</button>
-          </div>
-        </div>
+      {/* ===== СПИСОК ТРАНЗАКЦИЙ ===== */}
+      <div className="flex flex-col gap-4">
+        {Object.entries(groupedTransactions).map(([date, txs]) => (
+          <div key={date} className="flex flex-col gap-1.5">
+            {/* Разделитель даты */}
+            <div className={`text-sm font-semibold ml-3 mt-1 mb-1 ${darkMode ? 'text-slate-300' : 'text-[#303133]'}`}>
+              {date}
+            </div>
 
-        <div className="flex flex-col">
-          {transactions.map((tx) => {
+            {/* Маппинг транзакций внутри даты */}
+            {txs.map(tx => {
+              const isExpanded = expandedRows.includes(tx.id)
+              const rowColors = getRowColors(tx.category)
 
-            // --- ДЕПОЗИТ ---
-            if (tx.type === "deposit") return (
-              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3 shrink-0">
-                  <ArrowDownRight className="w-4 h-4 text-emerald-500" />
-                </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
-                  <div>
-                    <div className="text-[11px] font-bold text-emerald-500">DEPOSIT</div>
-                    <div className="text-[9px] text-gray-500">{tx.date}</div>
-                  </div>
-                  <div>
-                    <div className={`text-[11px] font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.method}</div>
-                    {tx.bonusCode && <div className="text-[9px] text-amber-500 flex items-center gap-0.5"><Ticket className="w-2.5 h-2.5"/> {tx.bonusCode}</div>}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[9px] text-gray-500">Balance Shift</div>
-                    <div className="text-[10px] font-mono text-gray-400">{formatCur(tx.balanceBefore!)} → <span className={darkMode?'text-white':'text-black'}>{formatCur(tx.balanceAfter!)}</span></div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-emerald-500">+{formatCur(tx.amount)}</div>
-                  </div>
-                </div>
-              </div>
-            )
-
-            // --- ВЫПЛАТА ---
-            if (tx.type === "withdrawal") return (
-              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
-                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mr-3 shrink-0">
-                  <ArrowUpRight className="w-4 h-4 text-red-500" />
-                </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
-                  <div>
-                    <div className="text-[11px] font-bold text-red-500">WITHDRAWAL</div>
-                    <div className="text-[9px] text-gray-500">{tx.date}</div>
-                  </div>
-                  <div>
-                    <div className={`text-[11px] font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.method}</div>
-                    <div className="text-[9px] text-amber-500">{tx.status}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[9px] text-gray-500">Balance Shift</div>
-                    <div className="text-[10px] font-mono text-gray-400">{formatCur(tx.balanceBefore!)} → <span className={darkMode?'text-white':'text-black'}>{formatCur(tx.balanceAfter!)}</span></div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-red-500">{formatCur(tx.amount)}</div>
-                  </div>
-                </div>
-              </div>
-            )
-
-            // --- СПОРТ СТАВКА ---
-            if (tx.type === "sport") return (
-              <div key={tx.id} className={`flex items-center p-3 border-b border-dashed ${darkMode ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'}`}>
-                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center mr-3 shrink-0">
-                  <Trophy className="w-4 h-4 text-indigo-400" />
-                </div>
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
-                  <div>
-                    <div className="text-[11px] font-bold text-indigo-400">SPORT BET</div>
-                    <div className="text-[9px] font-mono text-gray-500">{tx.betId} | {tx.date}</div>
-                  </div>
-                  <div className="col-span-2">
-                    <div className={`text-[11px] font-medium truncate ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.event}</div>
-                    <div className="text-[9px] text-gray-500 truncate">{tx.market} <span className="font-bold text-amber-500 mx-1">@{tx.odds?.toFixed(2)}</span></div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[9px] text-gray-500">Amount / Profit</div>
-                    <div className="text-[11px] font-bold flex items-center justify-end gap-1">
-                      <span className="text-gray-400">{formatCur(tx.amount)}</span> / 
-                      <span className={tx.profit! > 0 ? "text-emerald-500" : "text-red-500"}>{tx.profit! > 0 ? '+' : ''}{formatCur(tx.profit!)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-
-            // --- КАЗИНО ГРУППА (СЛОТЫ) ---
-            if (tx.type === "casino_group") {
-              const isExpanded = expandedGroups.includes(tx.id)
               return (
-                <div key={tx.id} className={`border-b border-dashed ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
-                  {/* Заголовок группы */}
+                <div key={tx.id} className="flex flex-col">
+                  {/* ОСНОВНАЯ СТРОКА ТРАНЗАКЦИИ */}
                   <div 
-                    onClick={() => toggleGroup(tx.id)}
-                    className={`flex items-center p-3 cursor-pointer select-none transition-colors ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'} ${isExpanded ? (darkMode ? 'bg-white/5' : 'bg-gray-50') : ''}`}
+                    onClick={() => toggleRow(tx.id)}
+                    className={`flex items-center min-h-[69px] p-2 rounded-xl border border-l-4 cursor-pointer transition-all ${rowColors}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center mr-3 shrink-0">
-                      <Gamepad2 className="w-4 h-4 text-purple-400" />
+                    {/* 1. Время и Девайс (w-[77px]) */}
+                    <div className="w-[77px] shrink-0 mr-3 flex flex-col justify-center">
+                      <div className={`text-[13.5px] font-medium tracking-tight ${darkMode ? 'text-slate-300' : 'text-[#606266]'}`}>{tx.time}</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className={`text-[11px] font-medium ${darkMode ? 'text-slate-500' : 'text-[#909399]'}`}>{tx.device}</span>
+                        {tx.device === 'Web' ? <Monitor className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-[#909399]'}`} /> : <Smartphone className={`w-3 h-3 ${darkMode ? 'text-slate-500' : 'text-[#909399]'}`} />}
+                      </div>
                     </div>
-                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
-                      <div>
-                        <div className="text-[11px] font-bold text-purple-400">CASINO SESSION</div>
-                        <div className="text-[9px] text-gray-500">{tx.date}</div>
-                      </div>
-                      <div className="col-span-2">
-                        <div className={`text-[11px] font-medium truncate ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{tx.game}</div>
-                        <div className="text-[9px] text-gray-500">{tx.totalBets} spins</div>
-                      </div>
-                      <div className="text-right flex items-center justify-end gap-2">
-                        <div>
-                          <div className="text-[9px] text-gray-500">Turnover / Profit</div>
-                          <div className="text-[11px] font-bold flex items-center justify-end gap-1">
-                            <span className="text-gray-400">{formatCur(tx.totalAmount!)}</span> / 
-                            <span className={tx.totalProfit! > 0 ? "text-emerald-500" : "text-red-500"}>{formatCur(tx.totalProfit!)}</span>
-                          </div>
+
+                    {/* 2. Основной блок: Тип и Статус */}
+                    <div className="flex flex-1 min-w-0 pr-3 h-full items-center">
+                      {/* Тип (w-[165px]) */}
+                      <div className="w-[165px] shrink-0 pr-4 flex flex-col justify-center">
+                        <div className={`text-[13px] font-medium truncate ${darkMode ? 'text-slate-200' : 'text-[#303133]'}`}>
+                          {tx.title}
                         </div>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 ml-2" /> : <ChevronDown className="w-4 h-4 text-gray-400 ml-2" />}
+                        <div className={`text-[11px] mt-0.5 truncate ${darkMode ? 'text-slate-400' : 'text-[#606266]'}`}>
+                          {tx.subtitle}
+                        </div>
                       </div>
+
+                      {/* Вертикальный разделитель */}
+                      <div className={`w-px h-8 mx-2 shrink-0 ${darkMode ? 'bg-white/10' : 'bg-[#ebeef5]'}`} />
+
+                      {/* Статус и Детали (flex-1) */}
+                      <div className="flex-1 min-w-0 overflow-hidden flex flex-col justify-center pl-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[13px] font-medium ${darkMode ? 'text-slate-200' : 'text-[#303133]'}`}>
+                            {tx.statusTitle}
+                          </span>
+                          
+                          {/* Рендер бейджей/лейблов (New Wallet, M, Check Purse) */}
+                          {tx.labels?.map((l, idx) => (
+                            <span 
+                              key={idx} 
+                              onClick={l.isClickable ? (e) => handleLabelClick(e, l.text, tx.id) : undefined}
+                              className={`px-1.5 py-0.5 text-[10px] font-medium rounded border ${
+                                l.type === 'danger' ? 'bg-red-50 text-red-500 border-red-200 dark:bg-red-950/30 dark:border-red-500/30' :
+                                l.type === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:border-amber-500/30' :
+                                'bg-teal-50 text-teal-600 border-teal-200 dark:bg-teal-950/30 dark:border-teal-500/30'
+                              } ${l.isClickable ? 'cursor-pointer hover:opacity-80 flex items-center gap-1 shadow-sm' : ''}`}
+                            >
+                              {l.isClickable && <Search className="w-2.5 h-2.5" />}
+                              {l.text}
+                            </span>
+                          ))}
+                        </div>
+                        <div className={`text-[11px] mt-0.5 truncate ${darkMode ? 'text-slate-400' : 'text-[#606266]'}`}>
+                          {tx.statusSubtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Финансовый блок: Баланс и Изменение */}
+                    <div className="flex items-center h-full">
+                      {/* Баланс (w-[102px]) */}
+                      <div className={`w-[102px] shrink-0 text-right mr-4 text-[12px] font-medium tabular-nums ${darkMode ? 'text-slate-300' : 'text-[#606266]'}`}>
+                        {formatCur(tx.balance)}
+                      </div>
+                      
+                      {/* Вертикальный разделитель */}
+                      <div className={`w-px h-8 shrink-0 ${darkMode ? 'bg-white/10' : 'bg-[#ebeef5]'}`} />
+                      
+                      {/* Сумма транзакции (w-[130px]) */}
+                      <div className={`w-[130px] shrink-0 text-right pl-4 text-[12px] font-medium tabular-nums ${tx.amountColor}`}>
+                        {tx.amountLabel}
+                      </div>
+                    </div>
+
+                    {/* 4. Вейджер / Индикатор (w-[40px]) */}
+                    <div className="w-[40px] shrink-0 flex justify-end ml-2">
+                      {tx.wager && <span className={`text-[12px] font-medium ${darkMode ? 'text-slate-400' : 'text-[#606266]'}`}>{tx.wager}</span>}
+                      {/* Иконка стрелочки для раскрытия */}
+                      {(tx.paymentDetails || tx.sportDetails || tx.casinoDetails) && (
+                        <div className="ml-2">
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* Раскрывающийся список спинов */}
+
+                  {/* РАСКРЫВАЮЩИЙСЯ БЛОК (DROPDOWN) */}
                   {isExpanded && (
-                    <div className={`pl-14 pr-3 py-2 text-[10px] ${darkMode ? 'bg-black/20' : 'bg-gray-100/50'}`}>
-                      <div className="grid grid-cols-4 gap-2 mb-1 text-gray-500 uppercase tracking-wider font-bold">
-                        <div>Time</div>
-                        <div className="text-right">Bet</div>
-                        <div className="text-right">Win</div>
-                        <div className="text-right">Net Profit</div>
-                      </div>
-                      {tx.sessionDetails?.map(spin => (
-                        <div key={spin.id} className={`grid grid-cols-4 gap-2 py-1 border-b last:border-0 ${darkMode ? 'border-white/5' : 'border-gray-200'}`}>
-                          <div className="font-mono text-gray-400">{spin.time}</div>
-                          <div className="text-right text-gray-400">{formatCur(spin.amount)}</div>
-                          <div className="text-right text-emerald-500">{spin.profit > 0 ? formatCur(spin.profit) : '-'}</div>
-                          <div className={`text-right font-bold ${spin.profit > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                            {formatCur(spin.amount + spin.profit)}
+                    <div className={`mt-[1px] mx-1 mb-3 p-3 rounded-b-xl border-t-0 border ${darkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-[#fafbfc] border-[#ebeef5]'}`}>
+                      
+                      {/* Дропдаун для ПЛАТЕЖЕЙ (Payments Table) */}
+                      {tx.paymentDetails && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-[11px] min-w-[700px]">
+                            <thead className={`border-b ${darkMode ? 'border-slate-700 text-slate-500' : 'border-[#ebeef5] text-[#94a3b8]'}`}>
+                              <tr>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider">Method</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider">Purse</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider">Owner</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider">First Dep.</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider">Last With.</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider text-right">Deposits</th>
+                                <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider text-right">Withdrawals</th>
+                              </tr>
+                            </thead>
+                            <tbody className={darkMode ? 'text-slate-300' : 'text-[#606266]'}>
+                              {tx.paymentDetails.map((pd, i) => (
+                                <tr key={i} className="border-b border-dashed border-slate-200 dark:border-slate-700 last:border-0">
+                                  <td className="py-2 font-mono">{pd.method}</td>
+                                  <td className="py-2 font-mono flex items-center gap-2">
+                                    {pd.purse}
+                                    {pd.flag && <span className="px-1.5 py-0.5 text-[9px] bg-amber-100 text-amber-600 rounded dark:bg-amber-900/30 dark:text-amber-400">{pd.flag}</span>}
+                                  </td>
+                                  <td className="py-2">{pd.owner || "—"}</td>
+                                  <td className="py-2">{pd.firstDep}</td>
+                                  <td className="py-2">{pd.lastWith}</td>
+                                  <td className="py-2 text-right">{pd.depSum}</td>
+                                  <td className="py-2 text-right font-medium text-teal-500">{pd.withSum}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Дропдаун для СПОРТА */}
+                      {tx.sportDetails && (
+                        <div className="flex">
+                          <div className="w-[77px] mr-3 shrink-0" />
+                          <div className="flex-1">
+                            <table className="w-full text-left text-[11px]">
+                              <thead className={`border-b ${darkMode ? 'border-slate-700 text-slate-500' : 'border-[#ebeef5] text-[#94a3b8]'}`}>
+                                <tr>
+                                  <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider w-[40%]">Event</th>
+                                  <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider w-[40%]">Market</th>
+                                  <th className="pb-2 font-semibold uppercase text-[9px] tracking-wider w-[20%]">Runner</th>
+                                </tr>
+                              </thead>
+                              <tbody className={`pt-2 ${darkMode ? 'text-slate-300' : 'text-[#303133]'}`}>
+                                <tr>
+                                  <td className="pt-2">{tx.sportDetails.event}</td>
+                                  <td className="pt-2 text-slate-500">{tx.sportDetails.market}</td>
+                                  <td className="pt-2 font-medium text-blue-500">{tx.sportDetails.runner}</td>
+                                </tr>
+                              </tbody>
+                            </table>
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Дропдаун для КАЗИНО (Список раундов) */}
+                      {tx.casinoDetails && (
+                        <div className="flex flex-col gap-2">
+                          {tx.casinoDetails.map((round, i) => (
+                            <div key={i} className={`flex items-center py-2 border-b last:border-0 ${darkMode ? 'border-slate-700' : 'border-[#d4edda]'}`}>
+                              <div className={`w-[77px] mr-3 shrink-0 text-[11px] font-mono ${darkMode ? 'text-slate-400' : 'text-[#64748b]'}`}>{round.time}</div>
+                              <div className="flex-1 pr-4">
+                                <div className={`text-[12px] font-medium ${darkMode ? 'text-slate-200' : 'text-[#333943]'}`}>{round.game}</div>
+                                <div className={`text-[10px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-[#666d78]'}`}>{round.rounds} • RTP: <span className={parseFloat(round.rtp) > 100 ? 'text-red-500' : ''}>{round.rtp}</span></div>
+                              </div>
+                              <div className={`w-[102px] shrink-0 text-right mr-4 text-[11px] tabular-nums ${darkMode ? 'text-slate-300' : 'text-[#303741]'}`}>{formatCur(round.bal)}</div>
+                              <div className={`w-[130px] shrink-0 text-right text-[11px] font-medium tabular-nums ${round.diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>{round.diff > 0 ? '+' : ''}{formatCur(round.diff)}</div>
+                              <div className="w-[40px] shrink-0 ml-2" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                     </div>
                   )}
                 </div>
               )
-            }
-            return null
-          })}
-        </div>
+            })}
+          </div>
+        ))}
       </div>
     </div>
   )
